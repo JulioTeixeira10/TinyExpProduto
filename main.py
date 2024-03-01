@@ -48,6 +48,7 @@ try:
     prodNome= prodData["prodNome"]
     prodPreco = prodData["prodPreco"]
     prodNCM = prodData["prodNCM"]
+    prodQuantidade = prodData["prodQuantidade"]
 except Exception as error:
     error_pop_up.log_erro(error)
     error_pop_up.pop_up_erro("Houve um erro no programa, leia o log para mais informações.")
@@ -58,6 +59,13 @@ urlIncProd = 'https://api.tiny.com.br/api2/produto.incluir.php'
 
 # Url para atualizar produto
 urlUpdProd = "https://api.tiny.com.br/api2/produto.alterar.php"
+
+# Url para dar entrada ou saída de estoque
+urlEstoqProd = "https://api.tiny.com.br/api2/produto.atualizar.estoque.php"
+
+# Url para obter id do produto
+urlIdProd = "https://api.tiny.com.br/api2/produtos.pesquisa.php"
+
 
 if updtOrIncl == "0":
     # Json com os dados do produto a ser incluido
@@ -149,4 +157,122 @@ elif updtOrIncl == "1":
         codErro = int(dataResponse["retorno"]["codigo_erro"])
         error_pop_up.log_erro(error_codes[codErro])
         error_pop_up.pop_up_erro(f"Houve um erro ao atualizar o produto: {error_codes[codErro]}")
+        sys.exit()
+
+elif updtOrIncl == "2":
+    # Request
+    data = f"token={token}&pesquisa={prodCod}&formato=JSON"
+    response = requests.post(urlIdProd, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+    resposta = response.text
+
+    # Tratamento de erro
+    dataResponse = json.loads(resposta)
+    status = dataResponse["retorno"]["status_processamento"]
+    
+    if status == "3": # Solicitação processada corretamente
+        try:
+            id = dataResponse["retorno"]["produtos"][0]["produto"]["id"]
+        except Exception as E:
+            error_pop_up.log_erro(E)
+            error_pop_up.pop_up_erro(f"Houve um erro ao buscar o ID do produto: {E}")
+            sys.exit() 
+        
+        estoque = f'''
+                <estoque>
+                    <idProduto>{int(id)}</idProduto>
+                    <tipo>E</tipo>
+                    <quantidade>{float(prodQuantidade)}</quantidade>
+                    <observacoes>Lançamento feito através da integração TinyERP-BancaMais.</observacoes>
+                </estoque>'''
+
+        data = f"token={token}&estoque={estoque}&formato=JSON"
+        response = requests.post(urlEstoqProd, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        resposta = response.text
+
+        if status == "3": # Solicitação processada corretamente
+            error_pop_up.log_info(f"Entrada de {prodQuantidade} unidades realizada no produto {prodNome}.")
+            error_pop_up.pop_up_check("Entrada de estoque realizada com sucesso.")
+            sys.exit()
+
+        elif status == "2": # Solicitação processada, mas possui erros de validação
+            codErro = int(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"])
+            error_pop_up.log_erro(error_codes[codErro])
+            error_pop_up.pop_up_erro(f"Houve um erro ao dar entrada no produto: {error_codes[codErro]}")
+            sys.exit()    
+
+        elif status == 1: # Solicitação processada corretamente
+            codErro = int(dataResponse["retorno"]["codigo_erro"])
+            error_pop_up.log_erro(error_codes[codErro])
+            error_pop_up.pop_up_erro(f"Houve um erro ao dar entrada no produto: {error_codes[codErro]}")
+            sys.exit()
+
+    elif status == "2": # Solicitação processada, mas possui erros de validação
+        codErro = int(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"])
+        error_pop_up.log_erro(error_codes[codErro])
+        error_pop_up.pop_up_erro(f"Houve um erro ao pegar o ID do produto: {error_codes[codErro]}")
+        sys.exit()    
+
+    elif status == 1: # Solicitação processada corretamente
+        codErro = int(dataResponse["retorno"]["codigo_erro"])
+        error_pop_up.log_erro(error_codes[codErro])
+        error_pop_up.pop_up_erro(f"Houve um erro ao pegar o ID do produto: {error_codes[codErro]}")
+        sys.exit()
+
+elif updtOrIncl == "3":
+    # Request
+    data = f"token={token}&pesquisa={prodCod}&formato=JSON"
+    response = requests.post(urlIdProd, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+    resposta = response.text
+
+    # Tratamento de erro
+    dataResponse = json.loads(resposta)
+    status = dataResponse["retorno"]["status_processamento"]
+
+    if status == "3": # Solicitação processada corretamente
+        try:
+            id = dataResponse["retorno"]["produtos"][0]["produto"]["id"]
+        except Exception as E:
+            error_pop_up.log_erro(E)
+            error_pop_up.pop_up_erro(f"Houve um erro ao buscar o ID do produto: {E}")
+            sys.exit() 
+        
+        estoque = f'''
+                <estoque>
+                    <idProduto>{int(id)}</idProduto>
+                    <tipo>S</tipo>
+                    <quantidade>{float(prodQuantidade)}</quantidade>
+                    <observacoes>Lançamento feito através da integração TinyERP-BancaMais.</observacoes>
+                </estoque>'''
+
+        data = f"token={token}&estoque={estoque}&formato=JSON"
+        response = requests.post(urlEstoqProd, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        resposta = response.text
+
+        if status == "3": # Solicitação processada corretamente
+            error_pop_up.log_info(f"Retirada de {prodQuantidade} unidades realizada no produto {prodNome}.")
+            error_pop_up.pop_up_check("Retirada de estoque realizada com sucesso.")
+            sys.exit()
+
+        elif status == "2": # Solicitação processada, mas possui erros de validação
+            codErro = int(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"])
+            error_pop_up.log_erro(error_codes[codErro])
+            error_pop_up.pop_up_erro(f"Houve um erro ao fazer a retirada de estoque do produto: {error_codes[codErro]}")
+            sys.exit()    
+
+        elif status == 1: # Solicitação processada corretamente
+            codErro = int(dataResponse["retorno"]["codigo_erro"])
+            error_pop_up.log_erro(error_codes[codErro])
+            error_pop_up.pop_up_erro(f"Houve um erro ao fazer a retirada de estoque do produto: {error_codes[codErro]}")
+            sys.exit()
+
+    elif status == "2": # Solicitação processada, mas possui erros de validação
+        codErro = int(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"])
+        error_pop_up.log_erro(error_codes[codErro])
+        error_pop_up.pop_up_erro(f"Houve um erro ao pegar o ID do produto: {error_codes[codErro]}")
+        sys.exit()    
+
+    elif status == 1: # Solicitação processada corretamente
+        codErro = int(dataResponse["retorno"]["codigo_erro"])
+        error_pop_up.log_erro(error_codes[codErro])
+        error_pop_up.pop_up_erro(f"Houve um erro ao pegar o ID do produto: {error_codes[codErro]}")
         sys.exit()

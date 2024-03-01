@@ -21,10 +21,10 @@ handler.setFormatter(formatter) #Define o formato do log para o handler
 logger.addHandler(handler) #Adiciona o handler ao logger
 
 def pop_up_erro(erro):
-    ctypes.windll.user32.MessageBoxW(0, f"{erro}", "ERRO:", MB_OK | ICON_ERROR)
+    ctypes.windll.user32.MessageBoxW(0, f"{erro}", "TinyERP - ERRO:", MB_OK | ICON_ERROR)
 
 def pop_up_check(check):
-    ctypes.windll.user32.MessageBoxW(0, f"{check}", "INFO:", MB_OK | ICON_INFO)
+    ctypes.windll.user32.MessageBoxW(0, f"{check}", "TinyERP - INFO:", MB_OK | ICON_INFO)
 
 def log_erro(erro):
     logger.error(erro)
