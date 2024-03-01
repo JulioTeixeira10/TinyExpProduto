@@ -1,2 +1,4 @@
 dadosProd.cfg
 log_file.log
+__pycache__/
+expProd.exe
