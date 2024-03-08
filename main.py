@@ -11,10 +11,14 @@ def errorTreatment(dataResponse, mensagem): # Função para tratamento de erro
     sys.exit()
 
 def sendRequest(chave, valor, url): # Função para enviar request
-    data = f"token={token}&{chave}={valor}&formato=JSON"
-    response = requests.post(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
-    resposta = response.text
-    return resposta
+    try:
+        data = f"token={token}&{chave}={valor}&formato=JSON"
+        response = requests.post(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        resposta = response.text
+        return resposta
+    except Exception as E:
+        error_pop_up.log_erro(E)
+        error_pop_up.pop_up_erro(f"Houve um erro ao enviar a request: {E}")
     
 # Dicionário contendo os possiveis erros
 error_codes = {
