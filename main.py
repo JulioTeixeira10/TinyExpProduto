@@ -73,23 +73,43 @@ except Exception as error:
     sys.exit()
 
 # Json com os dados do produto à ser atualizado
-produto = f'''{{
-    "produtos": [
-        {{
-            "produto": {{
-                "sequencia": 1,
-                "nome": "{str(prodNome)}",
-                "codigo": "{str(prodCod)}",
-                "unidade": "Un",
-                "preco": {float(prodPreco)},
-                "ncm": "{str(prodNCM)}",
-                "origem": "0",
-                "situacao": "A",
-                "tipo": "P"
+if prodQuantidade:
+    produto = f'''{{
+        "produtos": [
+            {{
+                "produto": {{
+                    "sequencia": 1,
+                    "nome": "{str(prodNome)}",
+                    "codigo": "{str(prodCod)}",
+                    "unidade": "Un",
+                    "preco": {float(prodPreco)},
+                    "ncm": "{str(prodNCM)}",
+                    "estoque_atual": "{prodQuantidade}",
+                    "origem": "0",
+                    "situacao": "A",
+                    "tipo": "P"
+                }}
             }}
-        }}
-    ]
-}}'''
+        ]
+    }}'''
+else:
+    produto = f'''{{
+        "produtos": [
+            {{
+                "produto": {{
+                    "sequencia": 1,
+                    "nome": "{str(prodNome)}",
+                    "codigo": "{str(prodCod)}",
+                    "unidade": "Un",
+                    "preco": {float(prodPreco)},
+                    "ncm": "{str(prodNCM)}",
+                    "origem": "0",
+                    "situacao": "A",
+                    "tipo": "P"
+                }}
+            }}
+        ]
+    }}'''
 
 urlIncProd = 'https://api.tiny.com.br/api2/produto.incluir.php' # Url para incluir produto
 urlUpdProd = "https://api.tiny.com.br/api2/produto.alterar.php" # Url para atualizar produto
