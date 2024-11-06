@@ -53,13 +53,13 @@ dirProd = "C:\\TinyProdUni\\dadosProd.cfg"
 try:
     # Objeto Token
     configObject1 = ConfigParser()
-    configObject1.read(dirToken)
+    configObject1.read(dirToken, encoding='utf-8')
     key = configObject1["KEY"]
     token = key["token"]
 
     # Objeto Produto
     configObject2 = ConfigParser()
-    configObject2.read(dirProd)
+    configObject2.read(dirProd, encoding='utf-8')
     prodData = configObject2["PRODDATA"]
     updtOrIncl = prodData["updtOrIncl"]
     prodCod = prodData["prodCod"]
@@ -116,104 +116,109 @@ urlUpdProd = "https://api.tiny.com.br/api2/produto.alterar.php" # Url para atual
 urlIdProd = "https://api.tiny.com.br/api2/produtos.pesquisa.php" # Url para obter id do produto
 urlEstoqProd = "https://api.tiny.com.br/api2/produto.atualizar.estoque.php" # Url para dar entrada ou saída de estoque
 
-if updtOrIncl == "0":
-    resposta = sendRequest("produto", produto, urlIncProd)
-    dataResponse = json.loads(resposta)
-    status = dataResponse["retorno"]["status_processamento"]
+try:
+    if updtOrIncl == "0":
+        resposta = sendRequest("produto", produto, urlIncProd)
+        dataResponse = json.loads(resposta)
+        status = dataResponse["retorno"]["status_processamento"]
 
-    if status == "3": # Solicitação processada corretamente
-        error_pop_up.log_info(f"O produto {prodCod} - {prodNome} foi cadastrado com sucesso.")
-        error_pop_up.pop_up_check("Produto cadastrado com sucesso.")
-        sys.exit()
-    elif status == "2": # Solicitação processada, mas possui erros de validação
-        errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao cadastrar o produto:")  
-    elif status == 1: # Solicitação processada corretamente
-        errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao cadastrar o produto:")
-
-elif updtOrIncl == "1":
-    resposta = sendRequest("produto", produto, urlUpdProd)
-    dataResponse = json.loads(resposta)
-    status = dataResponse["retorno"]["status_processamento"]
-
-    if status == "3":
-        error_pop_up.log_info(f"O produto {prodCod} - {prodNome} foi atualizado com sucesso.")
-        error_pop_up.pop_up_check("Produto atualizado com sucesso.")
-        sys.exit()
-    elif status == "2":
-        errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao atualizar o produto:")
-    elif status == 1:
-        errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao atualizar o produto:")
-
-elif updtOrIncl == "2":
-    resposta = sendRequest("pesquisa", prodCod, urlIdProd)
-    dataResponse = json.loads(resposta)
-    status = dataResponse["retorno"]["status_processamento"]
-    
-    if status == "3":
-        try:
-            id = dataResponse["retorno"]["produtos"][0]["produto"]["id"]
-        except Exception as E:
-            error_pop_up.log_erro(E)
-            error_pop_up.pop_up_erro(f"Houve um erro ao buscar o ID do produto: {E}")
-            sys.exit() 
-        
-        estoque = f'''
-                <estoque>
-                    <idProduto>{int(id)}</idProduto>
-                    <tipo>E</tipo>
-                    <quantidade>{float(prodQuantidade)}</quantidade>
-                    <observacoes>Lançamento feito através da integração TinyERP-BancaMais.</observacoes>
-                </estoque>'''
-
-        resposta = sendRequest("estoque", estoque, urlEstoqProd)
-
-        if status == "3": 
-            error_pop_up.log_info(f"Entrada de {prodQuantidade} unidades realizada no produto {prodNome}.")
-            error_pop_up.pop_up_check("Entrada de estoque realizada com sucesso.")
+        if status == "3": # Solicitação processada corretamente
+            error_pop_up.log_info(f"O produto {prodCod} - {prodNome} foi cadastrado com sucesso.")
+            error_pop_up.pop_up_check("Produto cadastrado com sucesso.")
             sys.exit()
-        elif status == "2": 
-            errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao dar entrada no produto:") 
-        elif status == 1:
-            errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao dar entrada no produto:")
+        elif status == "2": # Solicitação processada, mas possui erros de validação
+            errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao cadastrar o produto:")  
+        elif status == 1: # Solicitação processada corretamente
+            errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao cadastrar o produto:")
 
-    elif status == "2": 
-        errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:") 
-    elif status == 1:
-        errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:")
+    elif updtOrIncl == "1":
+        resposta = sendRequest("produto", produto, urlUpdProd)
+        dataResponse = json.loads(resposta)
+        status = dataResponse["retorno"]["status_processamento"]
 
-elif updtOrIncl == "3":
-    resposta = sendRequest("pesquisa", prodCod, urlIdProd)
-    dataResponse = json.loads(resposta)
-    status = dataResponse["retorno"]["status_processamento"]
-
-    if status == "3":
-        try:
-            id = dataResponse["retorno"]["produtos"][0]["produto"]["id"]
-        except Exception as E:
-            error_pop_up.log_erro(E)
-            error_pop_up.pop_up_erro(f"Houve um erro ao buscar o ID do produto: {E}")
-            sys.exit() 
-        
-        estoque = f'''
-                <estoque>
-                    <idProduto>{int(id)}</idProduto>
-                    <tipo>S</tipo>
-                    <quantidade>{float(prodQuantidade)}</quantidade>
-                    <observacoes>Lançamento feito através da integração TinyERP-BancaMais.</observacoes>
-                </estoque>'''
-
-        resposta = sendRequest("estoque", estoque, urlEstoqProd)
-
-        if status == "3": 
-            error_pop_up.log_info(f"Retirada de {prodQuantidade} unidades realizada no produto {prodNome}.")
-            error_pop_up.pop_up_check("Retirada de estoque realizada com sucesso.")
+        if status == "3":
+            error_pop_up.log_info(f"O produto {prodCod} - {prodNome} foi atualizado com sucesso.")
+            error_pop_up.pop_up_check("Produto atualizado com sucesso.")
             sys.exit()
         elif status == "2":
-            errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao fazer a retirada de estoque do produto:")
+            errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao atualizar o produto:")
         elif status == 1:
-            errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao fazer a retirada de estoque do produto:")
+            errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao atualizar o produto:")
 
-    elif status == "2":
-        errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:") 
-    elif status == 1:
-        errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:")
+    elif updtOrIncl == "2":
+        resposta = sendRequest("pesquisa", prodCod, urlIdProd)
+        dataResponse = json.loads(resposta)
+        status = dataResponse["retorno"]["status_processamento"]
+        
+        if status == "3":
+            try:
+                id = dataResponse["retorno"]["produtos"][0]["produto"]["id"]
+            except Exception as E:
+                error_pop_up.log_erro(E)
+                error_pop_up.pop_up_erro(f"Houve um erro ao buscar o ID do produto: {E}")
+                sys.exit() 
+            
+            estoque = f'''
+                    <estoque>
+                        <idProduto>{int(id)}</idProduto>
+                        <tipo>E</tipo>
+                        <quantidade>{float(prodQuantidade)}</quantidade>
+                        <observacoes>Lançamento feito através da integração TinyERP-BancaMais.</observacoes>
+                    </estoque>'''
+
+            resposta = sendRequest("estoque", estoque, urlEstoqProd)
+
+            if status == "3": 
+                error_pop_up.log_info(f"Entrada de {prodQuantidade} unidades realizada no produto {prodNome}.")
+                error_pop_up.pop_up_check("Entrada de estoque realizada com sucesso.")
+                sys.exit()
+            elif status == "2": 
+                errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao dar entrada no produto:") 
+            elif status == 1:
+                errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao dar entrada no produto:")
+
+        elif status == "2": 
+            errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:") 
+        elif status == 1:
+            errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:")
+
+    elif updtOrIncl == "3":
+        resposta = sendRequest("pesquisa", prodCod, urlIdProd)
+        dataResponse = json.loads(resposta)
+        status = dataResponse["retorno"]["status_processamento"]
+
+        if status == "3":
+            try:
+                id = dataResponse["retorno"]["produtos"][0]["produto"]["id"]
+            except Exception as E:
+                error_pop_up.log_erro(E)
+                error_pop_up.pop_up_erro(f"Houve um erro ao buscar o ID do produto: {E}")
+                sys.exit() 
+            
+            estoque = f'''
+                    <estoque>
+                        <idProduto>{int(id)}</idProduto>
+                        <tipo>S</tipo>
+                        <quantidade>{float(prodQuantidade)}</quantidade>
+                        <observacoes>Lançamento feito através da integração TinyERP-BancaMais.</observacoes>
+                    </estoque>'''
+
+            resposta = sendRequest("estoque", estoque, urlEstoqProd)
+
+            if status == "3": 
+                error_pop_up.log_info(f"Retirada de {prodQuantidade} unidades realizada no produto {prodNome}.")
+                error_pop_up.pop_up_check("Retirada de estoque realizada com sucesso.")
+                sys.exit()
+            elif status == "2":
+                errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao fazer a retirada de estoque do produto:")
+            elif status == 1:
+                errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao fazer a retirada de estoque do produto:")
+
+        elif status == "2":
+            errorTreatment(dataResponse["retorno"]["registros"][0]["registro"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:") 
+        elif status == 1:
+            errorTreatment(dataResponse["retorno"]["codigo_erro"], "Houve um erro ao pegar o ID do produto:")
+except Exception as error:
+    error_pop_up.log_erro(error)
+    error_pop_up.pop_up_erro("Houve um erro no programa, leia o log para mais informações.")
+    sys.exit()
