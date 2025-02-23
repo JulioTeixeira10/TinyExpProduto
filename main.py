@@ -167,6 +167,8 @@ try:
                     </estoque>'''
 
             resposta = sendRequest("estoque", estoque, urlEstoqProd)
+            dataResponse = json.loads(resposta)
+            status = dataResponse["retorno"]["status_processamento"]
 
             if status == "3": 
                 error_pop_up.log_info(f"Entrada de {prodQuantidade} unidades realizada no produto {prodNome}.")
@@ -204,6 +206,8 @@ try:
                     </estoque>'''
 
             resposta = sendRequest("estoque", estoque, urlEstoqProd)
+            dataResponse = json.loads(resposta)
+            status = dataResponse["retorno"]["status_processamento"]
 
             if status == "3": 
                 error_pop_up.log_info(f"Retirada de {prodQuantidade} unidades realizada no produto {prodNome}.")
